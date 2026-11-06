@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase и Firebase</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 1100px;
+      margin: 30px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #00000010;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background: #4169e1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3053c4;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    .users {
+      margin-top: 15px;
+    }
+
+    .user {
+      background: #f1f3f8;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+    }
+
+    .status {
+      color: #666;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Supabase n Firebase</h1>
+
+  <div class="container">
+
+    <!-- SUPABASE БЕЗ REALTIME -->
+
+    <div class="card">
+      <h2>Supabase без Realtime</h2>
+
+      <form id="sbForm">
+        <input id="sbLogin" placeholder="Логин" required>
+        <input id="sbPass" type="password"
+               placeholder="Пароль" required>
+        <button type="submit">Добавить</button>
+      </form>
+
+      <h3>Список пользователей</h3>
+      <button id="sbRefresh">Обновить</button>
+
+      <div id="sbUsers" class="users"></div>
+      <p id="sbStatus" class="status"></p>
+    </div>
+
+
+    <!-- SUPABASE С REALTIME -->
+
+    <div class="card">
+      <h2>Supabase с Realtime</h2>
+
+      <form id="sbLiveForm">
+        <input id="sbLiveLogin" placeholder="Логин" required>
+        <input id="sbLivePass" type="password"
+               placeholder="Пароль" required>
+        <button type="submit">Добавить</button>
+      </form>
+
+      <h3>Список пользователей</h3>
+
+      <div id="sbLiveUsers" class="users"></div>
+      <p id="sbLiveStatus" class="status">Подключение...</p>
+    </div>
+
+
+    <!-- FIREBASE БЕЗ REALTIME -->
+
+    <div class="card">
+      <h2>Firebase без Realtime</h2>
+
+      <form id="fbForm">
+        <input id="fbLogin" placeholder="Логин" required>
+        <input id="fbPass" type="password"
+               placeholder="Пароль" required>
+        <button type="submit">Добавить</button>
+      </form>
+
+      <h3>Список пользователей</h3>
+      <button id="fbRefresh">Обновить</button>
+
+      <div id="fbUsers" class="users"></div>
+      <p id="fbStatus" class="status"></p>
+    </div>
+
+
+    <!-- FIREBASE С REALTIME -->
+
+    <div class="card">
+      <h2>Firebase с Realtime</h2>
+
+      <form id="fbLiveForm">
+        <input id="fbLiveLogin" placeholder="Логин" required>
+        <input id="fbLivePass" type="password"
+               placeholder="Пароль" required>
+        <button type="submit">Добавить</button>
+      </form>
+
+      <h3>Список пользователей</h3>
+
+      <div id="fbLiveUsers" class="users"></div>
+      <p id="fbLiveStatus" class="status">Подключение...</p>
+    </div>
+
+  </div>
+
+
+  <script type="module">
+
+    import { createClient }
+      from 'https://esm.sh/@supabase/supabase-js@2'
+
+    import { initializeApp }
+      from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js'
+
+    import {
+      getDatabase,
+      ref,
+      get,
+      push,
+      set,
+      onValue
+    } from 'https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js'
+
+
+
+    const supabaseUrl =
+      'https://ailndpxbmmwgebuvlsix.supabase.co'
+
+    const supabaseKey =
+      'sb_publishable_rxbWjEOQASgfB5JmUVF07A_tor84chh'
+
+    const supabase = createClient(
+      supabaseUrl,
+      supabaseKey
+    )
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA51gEHT6IJV7bOSvF0oV6MIVNmBEBSCmE",
+      authDomain: "meow-c6c2c.firebaseapp.com",
+      databaseURL: "https://meow-c6c2c-default-rtdb.firebaseio.com",
+      projectId: "meow-c6c2c",
+      storageBucket: "meow-c6c2c.firebasestorage.app",
+      messagingSenderId: "394343535106",
+      appId: "1:394343535106:web:c80357656aecc13feccd1b",
+      measurementId: "G-EDBSL7EQ67"
+    }
+
+    const app = initializeApp(firebaseConfig)
+    const db = getDatabase(app)
+
+    const usersRef = ref(db, 'users')
+
+    function showStatus(elementId, message) {
+      document.getElementById(elementId).textContent = message
+    }
+
+    function showUsers(elementId, users) {
+      const list = document.getElementById(elementId)
+
+      list.innerHTML = ''
+
+      users.forEach(login => {
+        const div = document.createElement('div')
+
+        div.className = 'user'
+        div.textContent = 'Логин: ' + login
+
+        list.appendChild(div)
+      })
+
+      if (users.length === 0) {
+        list.textContent = 'Пользователей пока нет'
+      }
+    }
+
+
+    // SUPABASE БЕЗ REALTIME
+
+    async function addSupabase(login, password) {
+      const { error } = await supabase
+        .from('users')
+        .insert({
+          id: login,
+          pass: password
+        })
+
+      if (error) {
+        throw error
+      }
+    }
+
+    async function getSupabaseUsers(elementId) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+
+      if (error) {
+        throw error
+      }
+
+      const logins = data.map(user => user.id)
+
+      showUsers(elementId, logins)
+    }
+
+    document.getElementById('sbForm')
+      .addEventListener('submit', async event => {
+        event.preventDefault()
+
+        const login = document.getElementById('sbLogin').value
+        const password = document.getElementById('sbPass').value
+
+        try {
+          await addSupabase(login, password)
+          await getSupabaseUsers('sbUsers')
+
+          event.target.reset()
+
+          showStatus('sbStatus', 'Пользователь добавлен')
+        } catch (error) {
+          showStatus('sbStatus', error.message)
+          console.error(error)
+        }
+      })
+
+    document.getElementById('sbRefresh')
+      .addEventListener('click', async () => {
+        try {
+          await getSupabaseUsers('sbUsers')
+          showStatus('sbStatus', 'Список обновлён')
+        } catch (error) {
+          showStatus('sbStatus', error.message)
+        }
+      })
+
+    getSupabaseUsers('sbUsers')
+      .catch(error => showStatus('sbStatus', error.message))
+
+
+    // SUPABASE С REALTIME
+
+    document.getElementById('sbLiveForm')
+      .addEventListener('submit', async event => {
+        event.preventDefault()
+
+        const login = document.getElementById('sbLiveLogin').value
+        const password = document.getElementById('sbLivePass').value
+
+        try {
+          await addSupabase(login, password)
+
+          event.target.reset()
+
+          showStatus(
+            'sbLiveStatus',
+            'Пользователь добавлен'
+          )
+        } catch (error) {
+          showStatus('sbLiveStatus', error.message)
+          console.error(error)
+        }
+      })
+
+    getSupabaseUsers('sbLiveUsers')
+      .catch(error => showStatus('sbLiveStatus', error.message))
+
+    const channel = supabase
+      .channel('users-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users'
+        },
+        async () => {
+          try {
+            await getSupabaseUsers('sbLiveUsers')
+          } catch (error) {
+            showStatus('sbLiveStatus', error.message)
+          }
+        }
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          showStatus(
+            'sbLiveStatus',
+            'Realtime подключён'
+          )
+        }
+
+        if (status === 'CHANNEL_ERROR' ||
+            status === 'TIMED_OUT') {
+          showStatus(
+            'sbLiveStatus',
+            'Ошибка Realtime'
+          )
+        }
+      })
+
+
+    // FIREBASE БЕЗ REALTIME
+
+    async function addFirebase(login, password) {
+      const newUser = push(usersRef)
+
+      await set(newUser, {
+        login: login,
+        password: password
+      })
+    }
+
+    function firebaseLogins(snapshot) {
+      if (!snapshot.exists()) {
+        return []
+      }
+
+      const users = snapshot.val()
+
+      return Object.values(users)
+        .filter(user => user && typeof user.login === 'string')
+        .map(user => user.login)
+    }
+
+    async function getFirebaseUsers(elementId) {
+      const snapshot = await get(usersRef)
+
+      const logins = firebaseLogins(snapshot)
+
+      showUsers(elementId, logins)
+    }
+
+    document.getElementById('fbForm')
+      .addEventListener('submit', async event => {
+        event.preventDefault()
+
+        const login = document.getElementById('fbLogin').value
+        const password = document.getElementById('fbPass').value
+
+        try {
+          await addFirebase(login, password)
+          await getFirebaseUsers('fbUsers')
+
+          event.target.reset()
+
+          showStatus('fbStatus', 'Пользователь добавлен')
+        } catch (error) {
+          showStatus('fbStatus', error.message)
+          console.error(error)
+        }
+      })
+
+    document.getElementById('fbRefresh')
+      .addEventListener('click', async () => {
+        try {
+          await getFirebaseUsers('fbUsers')
+
+          showStatus('fbStatus', 'Список обновлён')
+        } catch (error) {
+          showStatus('fbStatus', error.message)
+        }
+      })
+
+    getFirebaseUsers('fbUsers')
+      .catch(error => showStatus('fbStatus', error.message))
+
+
+    //FIREBASE С REALTIME
+
+    document.getElementById('fbLiveForm')
+      .addEventListener('submit', async event => {
+        event.preventDefault()
+
+        const login = document.getElementById('fbLiveLogin').value
+        const password = document.getElementById('fbLivePass').value
+
+        try {
+          await addFirebase(login, password)
+
+          event.target.reset()
+
+          showStatus(
+            'fbLiveStatus',
+            'Пользователь добавлен'
+          )
+        } catch (error) {
+          showStatus('fbLiveStatus', error.message)
+          console.error(error)
+        }
+      })
+
+    onValue(
+      usersRef,
+      snapshot => {
+        const logins = firebaseLogins(snapshot)
+
+        showUsers('fbLiveUsers', logins)
+
+        showStatus(
+          'fbLiveStatus',
+          'Realtime подключён'
+        )
+      },
+      error => {
+        showStatus(
+          'fbLiveStatus',
+          'Ошибка: ' + error.message
+        )
+        console.error(error)
+      }
+    )
+
+  </script>
+
+</body>
+</html>
